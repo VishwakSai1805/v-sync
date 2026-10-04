@@ -6,6 +6,10 @@
 
 A full-stack MERN platform that unifies peer-to-peer resource lending, facility booking and crowd-sourced campus maintenance, with a behavioural karma economy that rewards accountability and penalises resource ghosting.
 
+### 🌐 [**Live demo → v-sync-website.vercel.app**](https://v-sync-website.vercel.app)
+
+[![Live](https://img.shields.io/badge/demo-live-22c55e?logo=vercel&logoColor=white)](https://v-sync-website.vercel.app)
+[![Release](https://img.shields.io/github/v/release/VishwakSai1805/v-sync?color=6366f1)](https://github.com/VishwakSai1805/v-sync/releases/latest)
 [![CI](https://github.com/VishwakSai1805/v-sync/actions/workflows/ci.yml/badge.svg)](https://github.com/VishwakSai1805/v-sync/actions/workflows/ci.yml)
 ![Node](https://img.shields.io/badge/Node.js-22-339933?logo=node.js&logoColor=white)
 ![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black)
