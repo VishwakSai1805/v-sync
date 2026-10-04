@@ -4,6 +4,14 @@ All notable changes to V-Sync are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+- Duplicate Detection Engine: location words no longer count as keywords. In the same room, a short report whose words are already on the ticket now merges, so a ticket's growing keyword set no longer pushes later reports below the threshold.
+- An expired session while a page was loading crashed the app to a blank page. Pages now wait for data, failed loads show a message, and an error boundary catches anything unexpected.
+- The dashboard greets users by full name (surname-first names were shown as just the surname).
+- Mongoose deprecation: `findOneAndUpdate` now uses `returnDocument: 'after'`.
+
 ## [1.0.0] - 2026-10-05
 
 First production release, deployed at **https://v-sync-website.vercel.app**.
@@ -27,7 +35,7 @@ First production release, deployed at **https://v-sync-website.vercel.app**.
 
 ### Engineering
 - MERN stack: React 18 + Vite + Tailwind CSS 4, Node.js 22 + Express 5, MongoDB Atlas (Mongoose 9).
-- 47 automated tests: unit tests for the algorithms and state machines, plus API integration tests for all five modules and every Google sign-in rule.
+- 50 automated tests: unit tests for the algorithms and state machines, plus API integration tests for all five modules and every Google sign-in rule.
 - GitHub Actions CI runs the full suite against a real MongoDB 7 and builds the frontend on every push.
 - Deployed on MongoDB Atlas (database), Render (API, `render.yaml` blueprint) and Vercel (frontend).
 

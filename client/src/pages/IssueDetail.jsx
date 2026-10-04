@@ -60,8 +60,8 @@ export default function IssueDetail() {
   const { id } = useParams();
   const { user } = useAuth();
   const { data, loading, error, reload } = useApi(`/issues/${id}`, [id]);
+  if (error && !data) return <ErrorBox error={error} />;
   if (loading) return <Spinner />;
-  if (error) return <ErrorBox error={error} />;
   const { issue, reports } = data;
   const imgs = [...new Set([issue.image, ...reports.map((r) => r.image)].filter(Boolean))];
 

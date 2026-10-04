@@ -11,6 +11,27 @@ describe('Duplicate Detection Engine', () => {
     expect(r.score).toBeGreaterThanOrEqual(0.6);
   });
 
+  test('short confirmation in the same room merges even into a ticket with many keywords', () => {
+    const grown = ticket({ title: 'WiFi router not working', description: 'No internet in the study room since morning, connection drops, page timeout' });
+    const r = findDuplicate({ category: 'network', building: 'SJT', room: '401', title: 'No internet in SJT 401', description: 'wifi router not working' }, [grown]);
+    expect(r.match).not.toBeNull();
+    expect(r.keywords).not.toContain('sjt'); // location words are not evidence
+  });
+
+  test('same room, unrelated network fault stays a new ticket', () => {
+    const r = findDuplicate({ category: 'network', building: 'SJT', room: '401', title: 'LAN port damaged', description: 'ethernet socket broken' }, [ticket({})]);
+    expect(r.match).toBeNull();
+  });
+
+  test('different room needs a near-identical description to merge', () => {
+    // Same building, identical fault description: likely one shared fault (e.g. a floor router).
+    const same = findDuplicate({ category: 'network', building: 'SJT', room: '405', title: 'WiFi not working', description: 'router down' }, [ticket({})]);
+    expect(same.match).not.toBeNull();
+    // Same building, only partly similar: a separate repair. Containment does NOT apply across rooms.
+    const partial = findDuplicate({ category: 'network', building: 'SJT', room: '405', title: 'WiFi slow', description: 'speed drops in the evening' }, [ticket({})]);
+    expect(partial.match).toBeNull();
+  });
+
   test('different category is never a duplicate', () => {
     const r = findDuplicate({ category: 'electrical', building: 'SJT', room: '401', title: 'WiFi not working' }, [ticket({})]);
     expect(r.match).toBeNull();

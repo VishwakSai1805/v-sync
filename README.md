@@ -165,12 +165,12 @@ Requirement volatility is handled architecturally. Karma values and grace period
 1. **Candidate retrieval.** Fetch master tickets in the same `category` with status `open` or `in_progress`, created in the last 30 days.
 2. **Keyword extraction.** Normalise the title and description text:
    - lower-case it and strip punctuation;
-   - remove stop-words;
+   - remove stop-words, and the building and room words (location is scored separately);
    - apply light stemming (*leaking → leak*);
    - fold synonyms (*wi-fi / internet / router → wifi*, *air conditioner → aircon*).
 3. **Scoring** for each candidate:
    - `locationScore` is 1.0 for the same building and room, 0.8 for the same building with no room given, 0.4 for the same building in a different room, and 0 for a different building (the candidate is discarded).
-   - `textScore` is the **Jaccard similarity** of the two keyword sets, |A∩B| / |A∪B|.
+   - `textScore` is the **Jaccard similarity** of the two keyword sets, |A∩B| / |A∪B|. In the **same room**, it is the larger of Jaccard and **containment** |A∩B| / |A|. A short report whose words are all already on the ticket ("no internet here too") is a confirmation. This also stops a ticket's growing keyword set from pushing later short reports below the threshold. Across rooms only Jaccard applies, so a merge needs a near-identical description.
    - `score = 0.5 · locationScore + 0.5 · textScore`
 4. **Decision.** If the best `score ≥ 0.6`, the report links to that ticket: `reportCount++`, the reporter is added, and the keyword set grows. Otherwise a new master ticket is created.
 5. **Priority escalation by report count:**
@@ -285,7 +285,7 @@ stateDiagram-v2
 ```bash
 cd server
 npm test                                                         # unit tests
-MONGO_URI_TEST=mongodb://127.0.0.1:27017/vsync_test npm test     # unit + integration (29 tests)
+MONGO_URI_TEST=mongodb://127.0.0.1:27017/vsync_test npm test     # unit + integration (50 tests)
 ```
 
 > **Note:** Integration tests run against an isolated database (`MONGO_URI_TEST`). The suite resets that database before and after each run so every run starts clean, which is why it should be separate from the database the app uses.
@@ -381,10 +381,11 @@ The API uses these status codes:
 
 | | |
 |:-:|:-:|
-| <img src="docs/screenshots/p2p-library.png" alt="P2P Library" /> **P2P Resource Library** | <img src="docs/screenshots/issue-duplicate-merge.png" alt="Duplicate merge" /> **Duplicate Detection: two reports, one ticket** |
+| <img src="docs/screenshots/p2p-library.png" alt="P2P Library" /> **P2P Resource Library** | <img src="docs/screenshots/issue-duplicate-merge.png" alt="Duplicate merge" /> **Duplicate Detection: three reports, one ticket** |
 | <img src="docs/screenshots/facility-booking.png" alt="Booking" /> **Facility booking with check-in countdown** | <img src="docs/screenshots/approval-workflow.png" alt="Approval" /> **Multi-tier approval (Proctor ✓ → Warden)** |
 | <img src="docs/screenshots/karma-wallet.png" alt="Karma" /> **Karma Wallet ledger** | <img src="docs/screenshots/admin-analytics.png" alt="Analytics" /> **Admin Reports & Analytics** |
-| <img src="docs/screenshots/karma-rules.png" alt="Rules" /> **Runtime-editable karma rules** | <img src="docs/screenshots/login.png" alt="Login" /> **Login with demo accounts** |
+| <img src="docs/screenshots/karma-rules.png" alt="Rules" /> **Runtime-editable karma rules** | <img src="docs/screenshots/login.png" alt="Login" /> **Google sign-in + demo accounts** |
+| <img src="docs/screenshots/profile.png" alt="Profile" /> **Profile: trust breakdown and activity** | |
 
 ## 14. Project Structure
 
@@ -407,7 +408,7 @@ v-sync/
 │   │   ├── jobs/sweeps.js          # anti-ghosting & overdue scheduler
 │   │   ├── seed.js                 # demo data
 │   │   └── index.js / app.js       # bootstrap
-│   └── tests/                      # unit.test.js, api.test.js
+│   └── tests/                      # unit.test.js, api.test.js, google.test.js
 ├── docs/screenshots/
 ├── .github/workflows/ci.yml        # CI pipeline
 └── render.yaml                     # Render blueprint

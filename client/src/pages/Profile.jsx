@@ -197,8 +197,8 @@ function SignInMethod({ profile }) {
 export function MyProfile() {
   const { refresh } = useAuth();
   const { data, loading, error, reload } = useApi('/users/me/profile');
+  if (error && !data) return <ErrorBox error={error} />;
   if (loading) return <Spinner />;
-  if (error) return <ErrorBox error={error} />;
   const { profile, trust, stats, items, wallet, staffStats } = data;
   const onSaved = () => { reload(); refresh(); };
   return (
@@ -236,8 +236,8 @@ export function PublicProfile() {
   const { id } = useParams();
   const { user } = useAuth();
   const { data, loading, error } = useApi(`/users/${id}/profile`, [id]);
+  if (error && !data) return <ErrorBox error={error} />;
   if (loading) return <Spinner />;
-  if (error) return <ErrorBox error={error} />;
   const { profile, trust, stats, items, isSelf } = data;
   return (
     <>
@@ -261,7 +261,7 @@ export function PublicProfile() {
             </div>
             <div>
               <div className="mb-3 flex items-center justify-between">
-                <h3 className="font-semibold">Items {isSelf ? 'you list' : `${profile.name.split(' ')[0]} lends`}</h3>
+                <h3 className="font-semibold">Items {isSelf ? 'you list' : `${profile.name} lends`}</h3>
                 {user.role === 'student' && !isSelf && <Link to="/library" className="text-sm font-medium text-indigo-600">Browse library →</Link>}
               </div>
               <ItemsGrid items={items} />

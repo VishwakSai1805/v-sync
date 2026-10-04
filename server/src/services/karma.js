@@ -50,7 +50,7 @@ async function applyDelta(userId, delta, { type, ruleCode = null, reason = '', r
   const inc = { balance: delta };
   if (delta > 0) inc.totalEarned = delta;
   if (delta < 0) inc.totalDeducted = -delta;
-  const wallet = await KarmaWallet.findOneAndUpdate({ user: userId }, { $inc: inc }, { new: true });
+  const wallet = await KarmaWallet.findOneAndUpdate({ user: userId }, { $inc: inc }, { returnDocument: 'after' });
   const status = nextWalletStatus(wallet.status, wallet.balance, delta);
   if (status !== wallet.status) {
     wallet.status = status;

@@ -8,7 +8,13 @@
 //                  0.8 same building, one side has no room given
 //                  0.4 same building, different room
 //                  0.0 different building (candidate dropped)
-//   textScore      Jaccard similarity of normalised keyword sets (title + description)
+//   textScore      Jaccard similarity of normalised keyword sets (title + description,
+//                  location words removed: location is scored separately). In the
+//                  SAME room, a report whose keywords are all already on the ticket
+//                  (containment) also counts: a short "wifi down here too" confirms a
+//                  known problem without repeating every word. Without this, a ticket
+//                  whose keyword set grows with each merged report would make later
+//                  short reports look less and less similar.
 //
 //   score = 0.5 * locationScore + 0.5 * textScore
 //
@@ -94,15 +100,37 @@ function locationScore(a, b) {
  * @param {Array}  candidates master tickets: { _id, category, building, room, keywords, status }
  * @returns {{ match: object|null, score: number, keywords: string[], scored: Array }}
  */
+// Share of A's words that also appear in B.
+function containment(a, b) {
+  const A = new Set(a);
+  if (!A.size) return 0;
+  const B = new Set(b);
+  let inter = 0;
+  for (const x of A) if (B.has(x)) inter += 1;
+  return inter / A.size;
+}
+
+// Building / room tokens ("sjt", "401") are not evidence of WHAT is broken.
+function withoutLocation(keywords, building, room) {
+  const loc = new Set(extractKeywords(building || '', room || ''));
+  return keywords.filter((k) => !loc.has(k));
+}
+
 function findDuplicate(report, candidates, threshold = THRESHOLD) {
-  const keywords = extractKeywords(report.title, report.description);
+  const keywords = withoutLocation(extractKeywords(report.title, report.description), report.building, report.room);
   const scored = [];
   for (const c of candidates) {
     if (c.category !== report.category) continue;
     if (c.status && !['open', 'in_progress'].includes(c.status)) continue;
     const loc = locationScore(report, c);
     if (loc === 0) continue;
-    const text = jaccard(keywords, c.keywords && c.keywords.length ? c.keywords : extractKeywords(c.title, c.description));
+    const ticketWords = withoutLocation(
+      c.keywords && c.keywords.length ? c.keywords : extractKeywords(c.title, c.description),
+      c.building,
+      c.room
+    );
+    const sim = jaccard(keywords, ticketWords);
+    const text = loc === 1 ? Math.max(sim, containment(keywords, ticketWords)) : sim;
     const score = Number((0.5 * loc + 0.5 * text).toFixed(3));
     scored.push({ candidate: c, score, loc, text: Number(text.toFixed(3)) });
   }
@@ -120,4 +148,4 @@ function priorityForCount(count) {
   return 'low';
 }
 
-module.exports = { THRESHOLD, extractKeywords, jaccard, locationScore, findDuplicate, priorityForCount, normalizeText };
+module.exports = { THRESHOLD, extractKeywords, jaccard, containment, locationScore, findDuplicate, priorityForCount, normalizeText };

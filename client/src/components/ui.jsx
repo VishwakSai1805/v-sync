@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { titleCase } from '../lib/format';
+import { setApiErrorReporter } from '../lib/hooks';
 
 const cx = (...c) => c.filter(Boolean).join(' ');
 
@@ -183,6 +184,7 @@ export function ToastProvider({ children }) {
     setItems((x) => [...x, { id, message, tone }]);
     setTimeout(() => setItems((x) => x.filter((i) => i.id !== id)), 4000);
   }, []);
+  useEffect(() => { setApiErrorReporter((message) => push(message, 'error')); }, [push]);
   return (
     <ToastCtx.Provider value={push}>
       {children}
