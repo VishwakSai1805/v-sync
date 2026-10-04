@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
-import { Button, ErrorBox, Field } from '../components/ui';
+import { api } from '../lib/api';
+import { Button, ErrorBox, Field, Spinner } from '../components/ui';
 
 function Shell({ title, subtitle, children }) {
   return (
@@ -38,13 +39,72 @@ const DEMO = [
   ['Proctor', 'proctor@vit.ac.in'], ['Warden', 'warden@vit.ac.in'], ['Maintenance', 'maint1@vit.ac.in'], ['Admin', 'admin@vit.ac.in'],
 ];
 
+// Loads Google Identity Services once and renders the official "Sign in with Google" button.
+let gsiPromise = null;
+function loadGsi() {
+  gsiPromise ??= new Promise((resolve, reject) => {
+    const el = document.createElement('script');
+    el.src = 'https://accounts.google.com/gsi/client';
+    el.async = true;
+    el.onload = resolve;
+    el.onerror = () => { gsiPromise = null; reject(new Error('Could not load Google sign-in. Check your connection.')); };
+    document.head.appendChild(el);
+  });
+  return gsiPromise;
+}
+
+function GoogleButton({ clientId, domain, onCredential, onError }) {
+  const ref = useRef(null);
+  const cb = useRef(onCredential);
+  cb.current = onCredential;
+  useEffect(() => {
+    let cancelled = false;
+    loadGsi()
+      .then(() => {
+        if (cancelled || !ref.current) return;
+        window.google.accounts.id.initialize({
+          client_id: clientId,
+          callback: (resp) => cb.current(resp.credential),
+          hd: domain, // hint: show only accounts from this Workspace domain (the server enforces it)
+          ux_mode: 'popup',
+          auto_select: false,
+        });
+        window.google.accounts.id.renderButton(ref.current, { theme: 'filled_blue', size: 'large', shape: 'pill', text: 'signin_with', width: 320 });
+      })
+      .catch((e) => onError(e.message));
+    return () => { cancelled = true; };
+  }, [clientId, domain, onError]);
+  return <div ref={ref} className="flex min-h-[44px] justify-center" />;
+}
+
 export function Login() {
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
+  const [cfg, setCfg] = useState(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [showDemo, setShowDemo] = useState(false);
+
+  useEffect(() => {
+    api.get('/auth/config')
+      .then(setCfg)
+      .catch(() => setCfg({ googleClientId: null, passwordLoginEnabled: true, studentDomains: [] }));
+  }, []);
+
+  const onGoogle = async (credential) => {
+    setBusy(true);
+    setError('');
+    try {
+      const res = await loginWithGoogle(credential);
+      navigate(res.isNewUser ? '/profile' : '/');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const submit = async (e) => {
     e.preventDefault();
@@ -60,23 +120,57 @@ export function Login() {
     }
   };
 
+  if (!cfg) {
+    return <Shell title="Sign in" subtitle="Connecting to V-Sync… (the server may take up to a minute to wake up)"><Spinner /></Shell>;
+  }
+
+  const google = Boolean(cfg.googleClientId);
+  const domain = cfg.studentDomains?.[0];
+  const passwordForm = (
+    <form onSubmit={submit} className="space-y-3">
+      <Field label="Email"><input className="input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required /></Field>
+      <Field label="Password"><input className="input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required /></Field>
+      <Button className="w-full" variant={google ? 'secondary' : 'primary'} loading={busy}>Sign in</Button>
+    </form>
+  );
+
   return (
-    <Shell title="Sign in" subtitle="Use your institutional email.">
-      <form onSubmit={submit} className="space-y-4">
-        <ErrorBox error={error} />
-        <Field label="Email"><input className="input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoFocus /></Field>
-        <Field label="Password"><input className="input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required /></Field>
-        <Button className="w-full" loading={busy}>Sign in</Button>
-      </form>
-      <p className="mt-4 text-center text-sm text-slate-500">New student? <Link to="/register" className="font-medium text-indigo-600">Create an account</Link></p>
-      <div className="mt-8 rounded-xl border border-slate-200 bg-white p-4">
-        <p className="label">Demo accounts (password: password123)</p>
-        <div className="mt-2 flex flex-wrap gap-1.5">
-          {DEMO.map(([label, em]) => (
-            <button key={em} type="button" onClick={() => { setEmail(em); setPassword('password123'); }} className="rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700 hover:bg-indigo-100 hover:text-indigo-700">{label}</button>
-          ))}
+    <Shell title="Sign in" subtitle={google ? `Use your VIT Google account${domain ? ` (@${domain})` : ''}.` : 'Use your institutional email.'}>
+      <ErrorBox error={error} />
+      {google && (
+        <div className="mt-4 space-y-3">
+          <GoogleButton clientId={cfg.googleClientId} domain={domain} onCredential={onGoogle} onError={setError} />
+          {busy && <p className="text-center text-sm text-slate-500">Signing you in…</p>}
+          <p className="text-center text-xs text-slate-500">New students get an account automatically on first sign-in. Faculty and staff accounts are set up by the campus admin.</p>
         </div>
-      </div>
+      )}
+
+      {!google && cfg.passwordLoginEnabled && (
+        <div className="mt-4">
+          {passwordForm}
+          <p className="mt-4 text-center text-sm text-slate-500">New student? <Link to="/register" className="font-medium text-indigo-600">Create an account</Link></p>
+        </div>
+      )}
+
+      {cfg.passwordLoginEnabled && (
+        <div className="mt-8 rounded-xl border border-slate-200 bg-white p-4">
+          <button type="button" onClick={() => setShowDemo((v) => !v)} className="flex w-full items-center justify-between text-left">
+            <span className="label mb-0">Demo accounts · one per role</span>
+            <span className="text-xs font-medium text-indigo-600">{showDemo || !google ? '' : 'Show'}</span>
+          </button>
+          {(showDemo || !google) && (
+            <>
+              <p className="mt-1 text-xs text-slate-500">For demonstrating every role (password: password123).</p>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {DEMO.map(([label, em]) => (
+                  <button key={em} type="button" onClick={() => { setEmail(em); setPassword('password123'); setShowDemo(true); }} className={`rounded-md px-2 py-1 text-xs font-medium ${email === em ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-indigo-100 hover:text-indigo-700'}`}>{label}</button>
+                ))}
+              </div>
+              {google && <div className="mt-4">{passwordForm}</div>}
+            </>
+          )}
+        </div>
+      )}
     </Shell>
   );
 }

@@ -22,3 +22,11 @@ services:
         sync: false
       - key: SEED_DEMO_DATA
         value: "true"
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_ALLOWED_DOMAINS
+        value: vitstudent.ac.in,vit.ac.in
+      - key: GOOGLE_STUDENT_DOMAINS
+        value: vitstudent.ac.in
+      - key: ENABLE_PASSWORD_LOGIN
+        value: "true"

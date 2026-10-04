@@ -43,6 +43,15 @@ export function AuthProvider({ children }) {
     return data.user;
   };
 
+  // Exchange a Google Identity Services credential (ID token) for a V-Sync session.
+  const loginWithGoogle = async (credential) => {
+    const data = await api.post('/auth/google', { credential });
+    tokenStore.set(data.token);
+    setUser(data.user);
+    await refresh();
+    return data;
+  };
+
   const register = async (form) => {
     const data = await api.post('/auth/register', form);
     tokenStore.set(data.token);
@@ -51,7 +60,7 @@ export function AuthProvider({ children }) {
     return data.user;
   };
 
-  const value = useMemo(() => ({ user, wallet, loading, login, register, logout, refresh }), [user, wallet, loading, logout, refresh]);
+  const value = useMemo(() => ({ user, wallet, loading, login, loginWithGoogle, register, logout, refresh }), [user, wallet, loading, logout, refresh]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 

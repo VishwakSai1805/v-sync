@@ -21,6 +21,12 @@ function StudentDashboard() {
   return (
     <>
       <PageHeader title={`Hi, ${user.name.split(' ')[0]} 👋`} subtitle="Here's what's happening on campus for you." />
+      {!user.studentId && (
+        <Link to="/profile" className="mb-5 flex items-center justify-between gap-3 rounded-xl border border-indigo-200 bg-indigo-50 p-4 text-sm text-indigo-900 hover:bg-indigo-100">
+          <span><b>Complete your profile:</b> add your registration number, year and hostel block so lenders and approvers know who you are.</span>
+          <span className="shrink-0 font-semibold">Open profile →</span>
+        </Link>
+      )}
       {wallet?.status === 'restricted' && (
         <div className="mb-5 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">
           <b>Your account is restricted.</b> Your karma balance is {wallet.balance}. You can't book facilities or borrow items until it is positive again — report valid issues or lend items to earn karma.

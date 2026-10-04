@@ -75,7 +75,7 @@ function NewUserModal({ onClose, onDone }) {
   const submit = async (e) => {
     e.preventDefault();
     setBusy(true);
-    try { await api.post('/admin/users', form); onDone(); } catch (err) { setError(err.message); setBusy(false); }
+    try { await api.post('/admin/users', { ...form, password: form.password || undefined }); onDone(); } catch (err) { setError(err.message); setBusy(false); }
   };
   return (
     <Modal open onClose={onClose} title="Create account">
@@ -88,7 +88,7 @@ function NewUserModal({ onClose, onDone }) {
         </Field>
         <Field label="Name"><input className="input" value={form.name} onChange={set('name')} required /></Field>
         <Field label="Email"><input className="input" type="email" value={form.email} onChange={set('email')} required /></Field>
-        <Field label="Temporary password"><input className="input" value={form.password} onChange={set('password')} minLength={6} required /></Field>
+        <Field label="Password (optional)" hint="Leave empty for Google sign-in: the person signs in with their VIT Google account using this email."><input className="input" value={form.password} onChange={set('password')} minLength={6} /></Field>
         <Field label="Department"><input className="input" value={form.department} onChange={set('department')} /></Field>
         <div className="flex justify-end gap-2"><Button type="button" variant="secondary" onClick={onClose}>Cancel</Button><Button loading={busy}>Create</Button></div>
       </form>

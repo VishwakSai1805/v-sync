@@ -4,9 +4,7 @@ import { api, imageUrl } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { useApi } from '../lib/hooks';
 import { fmtDate, ROLE_LABEL, titleCase } from '../lib/format';
-import { Badge, Button, Card, Empty, ErrorBox, Field, PageHeader, Spinner, Stat, TrustPill, useToast } from '../components/ui';
-
-const initials = (name = '') => name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
+import { Avatar, Badge, Button, Card, Empty, ErrorBox, Field, PageHeader, Spinner, Stat, TrustPill, useToast } from '../components/ui';
 
 function IdentityCard({ profile }) {
   const meta = [
@@ -19,7 +17,7 @@ function IdentityCard({ profile }) {
   ].filter(Boolean);
   return (
     <Card className="flex flex-wrap items-center gap-5 p-6">
-      <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-indigo-600 text-xl font-bold text-white">{initials(profile.name)}</div>
+      <Avatar user={profile} size="lg" />
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <h2 className="text-xl font-bold text-slate-900">{profile.name}</h2>
@@ -183,6 +181,19 @@ function StaffActivity({ role, staffStats }) {
   );
 }
 
+function SignInMethod({ profile }) {
+  return (
+    <Card className="p-5">
+      <h3 className="mb-2 font-semibold">Sign-in method</h3>
+      <p className="flex items-center gap-2 text-sm text-slate-700">
+        <svg viewBox="0 0 48 48" className="h-5 w-5" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.1 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.1 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>
+        Google account <span className="text-slate-500">({profile.email})</span>
+      </p>
+      <p className="mt-2 text-xs text-slate-500">Your password and security are managed by your institution's Google account. V-Sync never sees your Google password.</p>
+    </Card>
+  );
+}
+
 export function MyProfile() {
   const { refresh } = useAuth();
   const { data, loading, error, reload } = useApi('/users/me/profile');
@@ -194,13 +205,18 @@ export function MyProfile() {
     <>
       <PageHeader title="My Profile" subtitle="Your identity, reputation and activity on V-Sync." />
       <div className="space-y-6">
+        {profile.role === 'student' && !profile.studentId && (
+          <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4 text-sm text-indigo-900">
+            <b>Welcome to V-Sync!</b> Your name, email and photo came from your Google account. Add your <b>registration number, year and hostel block</b> below. Lenders and approvers see these when you request items or lab access.
+          </div>
+        )}
         <IdentityCard profile={profile} />
         {stats && <StudentStats stats={stats} wallet={wallet} />}
         <div className="grid items-start gap-6 lg:grid-cols-2">
           {trust && <TrustPanel trust={trust} />}
           <StaffActivity role={profile.role} staffStats={staffStats} />
           <EditDetails profile={profile} onSaved={onSaved} />
-          <ChangePassword />
+          {profile.hasPassword ? <ChangePassword /> : <SignInMethod profile={profile} />}
         </div>
         {profile.role === 'student' && (
           <div>

@@ -151,6 +151,18 @@ export function TrustPill({ score }) {
   return <span className={cx('rounded-full px-2 py-0.5 font-mono text-xs font-semibold', tone)} title="Trust score (0-100)">★ {score}</span>;
 }
 
+// Profile photo (Google account picture) with an initials fallback.
+export function Avatar({ user, size = 'md', className }) {
+  const [failed, setFailed] = useState(false);
+  const sizes = { sm: 'h-8 w-8 text-xs rounded-lg', md: 'h-10 w-10 text-sm rounded-xl', lg: 'h-16 w-16 text-xl rounded-2xl' };
+  const initials = String(user?.name || '?').split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
+  if (user?.avatarUrl && !failed) {
+    // Google photo URLs reject requests that carry a third-party Referer.
+    return <img src={user.avatarUrl} alt="" referrerPolicy="no-referrer" onError={() => setFailed(true)} className={cx('shrink-0 object-cover', sizes[size], className)} />;
+  }
+  return <div className={cx('flex shrink-0 items-center justify-center bg-indigo-600 font-bold text-white', sizes[size], className)}>{initials}</div>;
+}
+
 // Student name that opens their public profile (trust history, items).
 export function UserLink({ user, className }) {
   if (!user) return null;

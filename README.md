@@ -69,9 +69,12 @@ Densely populated university campuses face friction in two areas:
 
 **Cross-cutting:**
 - Authentication and access control:
-  - JWT authentication.
+  - **Google Sign-In (OpenID Connect SSO)** restricted to VIT Google Workspace accounts. The server verifies Google's signed ID token and its `hd` (hosted domain) claim.
+  - Students (`@vitstudent.ac.in`) are auto-provisioned on first sign-in. Staff roles are never self-assigned: an Admin pre-registers them, and they link their Google account on first login.
+  - Stateless JWT sessions for the API.
   - Role-Based Access Control (RBAC) across 5 roles: Student, Faculty Proctor, Hostel Warden, Maintenance Staff, Admin.
-  - Institutional-email domain enforcement on sign-up.
+  - Password login kept only for the demo role accounts, switchable off with `ENABLE_PASSWORD_LOGIN=false`.
+- User profiles: Google photo, academic details, trust breakdown, activity stats and public profiles for lenders.
 - In-app notifications.
 - Admin *Reports & Analytics* dashboard.
 - Karma leaderboard.
@@ -308,12 +311,13 @@ npm run dev:server                  # API  → http://localhost:5000
 npm run dev:client                  # Web  → http://localhost:5173 (new terminal; proxies /api)
 ```
 
-### Demo accounts
-All demo accounts use the password `password123`. The login page also has one-click fill buttons.
+### Signing in
+- **Real users:** use **Sign in with Google** with a VIT account. Students get an account automatically and complete their reg. no., year and hostel block on the profile page.
+- **Demo accounts** (one per role, for demonstrations): use the **Demo accounts** section on the login page. The password is `password123`.
 
 | Role | Email |
 |------|-------|
-| Student | `student1@vitstudent.ac.in` · `student2@…` · `student3@…` |
+| Student | `vishwak@vitstudent.ac.in` · `suyash@vitstudent.ac.in` · `pratik@vitstudent.ac.in` |
 | Faculty Proctor | `proctor@vit.ac.in` |
 | Hostel Warden | `warden@vit.ac.in` |
 | Maintenance Staff | `maint1@vit.ac.in` · `maint2@vit.ac.in` |
@@ -328,6 +332,11 @@ All demo accounts use the password `password123`. The login page also has one-cl
 | `CLIENT_ORIGIN` | Frontend URL(s) allowed by CORS |
 | `KARMA_STARTING_BALANCE` | Welcome karma (default 100) |
 | `ENABLE_SCHEDULER` | Anti-ghosting scheduler on/off (default on) |
+| `SEED_DEMO_DATA` | Load demo accounts and data on first boot if the database is empty |
+| `GOOGLE_CLIENT_ID` | OAuth 2.0 Web client ID from Google Cloud (empty = Google sign-in off) |
+| `GOOGLE_ALLOWED_DOMAINS` | Workspace domains allowed to sign in (default `vitstudent.ac.in,vit.ac.in`) |
+| `GOOGLE_STUDENT_DOMAINS` | Domains auto-provisioned as students (default `vitstudent.ac.in`) |
+| `ENABLE_PASSWORD_LOGIN` | Email/password login for demo accounts (default `true`) |
 
 ## 11. Deployment
 
@@ -336,6 +345,7 @@ All demo accounts use the password `password123`. The login page also has one-cl
 | Database | **MongoDB Atlas** (M0 free) | Create a DB user. Under Network Access, allow `0.0.0.0/0`. |
 | Backend | **Render** web service | Root `server` · build `npm install` · start `npm start` · env vars as above, plus `SEED_DEMO_DATA=true` to load the demo accounts on first boot (the free tier has no shell). Seeding runs only when the database is empty. `render.yaml` blueprint included. |
 | Frontend | **Vercel** | Root `client` · preset *Vite* · env `VITE_API_URL=https://<api>.onrender.com`. `vercel.json` handles SPA routing. |
+| Google Sign-In | **Google Cloud Console** | Create an OAuth 2.0 *Web application* client. Add the Vercel URL (and `http://localhost:5173`) to **Authorized JavaScript origins**, then set the client ID as `GOOGLE_CLIENT_ID` on Render. No client secret is needed: the browser gets an ID token and the server verifies it. |
 
 > Render's free tier sleeps after ~15 min idle, so the first request then takes ~30 s. The scheduler resumes on wake and catches up on missed ghost and overdue sweeps. The admin can also trigger a sweep manually from the dashboard.
 
@@ -345,7 +355,8 @@ All routes are under `/api`. Every route except auth and images needs `Authoriza
 
 | Resource | Endpoints |
 |----------|-----------|
-| Auth | `POST /auth/register` · `POST /auth/login` · `GET /auth/me` · `PATCH /auth/me` |
+| Auth | `GET /auth/config` · `POST /auth/google` · `POST /auth/login` · `POST /auth/register` · `GET/PATCH /auth/me` · `POST /auth/change-password` |
+| Users | `GET /users/:id/profile` (`:id` may be `me`) |
 | Resources | `GET /resources?kind=p2p\|facility&q=&category=&mine=` · `POST /resources` *(multipart)* · `GET/PATCH/DELETE /resources/:id` |
 | Loans | `GET /loans?role=borrower\|lender` · `POST /loans` · `POST /loans/:id/{approve,reject,cancel,handover,return}` |
 | Reservations | `GET /reservations` · `POST /reservations` · `POST /reservations/:id/{check-in,check-out,cancel}` |

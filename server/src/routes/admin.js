@@ -31,9 +31,11 @@ router.get('/users', ah(async (req, res) => {
 // Create staff accounts (faculty / warden / maintenance / admin) or students.
 router.post('/users', ah(async (req, res) => {
   const { name, email, password, role, department, facultyId, staffId, hostelBlock, studentId, year } = req.body;
-  if (!name || !email || !password || !role) throw new ApiError(400, 'name, email, password, role required');
+  // Password is optional: without one, the person signs in with Google using this email.
+  if (!name || !email || !role) throw new ApiError(400, 'name, email and role are required');
+  if (password !== undefined && password !== '' && String(password).length < 6) throw new ApiError(400, 'Password must be at least 6 characters');
   if (!User.ROLES.includes(role)) throw new ApiError(400, 'Invalid role');
-  const user = await User.create({ name, email, password, role, department, facultyId, staffId, hostelBlock, studentId, year });
+  const user = await User.create({ name, email, password: password || undefined, role, department, facultyId, staffId, hostelBlock, studentId, year });
   if (role === 'student') await karma.createWallet(user._id);
   res.status(201).json({ user });
 }));

@@ -54,7 +54,7 @@ function trustBreakdown(u) {
 // returned to the profile owner and admins.
 router.get('/:id/profile', ah(async (req, res) => {
   const id = req.params.id === 'me' ? req.user._id : req.params.id;
-  const user = await User.findById(id);
+  const user = await User.findById(id).select('+password');
   if (!user || !user.isActive) throw new ApiError(404, 'User not found');
   const isSelf = String(user._id) === String(req.user._id);
   const canSeePrivate = isSelf || req.user.role === 'admin';
@@ -65,6 +65,7 @@ router.get('/:id/profile', ah(async (req, res) => {
     role: user.role,
     department: user.department,
     year: user.year,
+    avatarUrl: user.avatarUrl || null,
     memberSince: user.createdAt,
   };
   let stats = null;
@@ -94,6 +95,9 @@ router.get('/:id/profile', ah(async (req, res) => {
       facultyId: user.facultyId,
       staffId: user.staffId,
       hostelBlock: user.hostelBlock,
+      // How this account signs in (never the password itself).
+      hasPassword: Boolean(user.password),
+      googleLinked: Boolean(user.googleId),
     });
     if (user.role === 'student') wallet = await karma.getWallet(user._id);
   } else if (user.role === 'student') {

@@ -3,7 +3,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { api } from '../lib/api';
 import { ROLE_LABEL, timeAgo } from '../lib/format';
-import { Badge } from './ui';
+import { Avatar, Badge } from './ui';
 
 const I = {
   home: 'M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10',
@@ -107,9 +107,12 @@ export default function Layout() {
         ))}
       </nav>
       <div className="border-t border-slate-800 p-4">
-        <NavLink to="/profile" className="block rounded-lg hover:bg-slate-800">
-          <p className="truncate text-sm font-semibold text-white">{user.name}</p>
-          <p className="truncate text-xs text-slate-400">{ROLE_LABEL[user.role]}</p>
+        <NavLink to="/profile" className="-m-1.5 flex items-center gap-3 rounded-lg p-1.5 hover:bg-slate-800">
+          <Avatar user={user} size="sm" />
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-white">{user.name}</p>
+            <p className="truncate text-xs text-slate-400">{ROLE_LABEL[user.role]}</p>
+          </div>
         </NavLink>
         <button onClick={logout} className="mt-3 text-xs font-medium text-slate-400 hover:text-white">Sign out →</button>
       </div>
