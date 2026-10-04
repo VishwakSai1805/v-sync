@@ -334,7 +334,7 @@ All demo accounts use the password `password123`. The login page also has one-cl
 | Component | Platform | Configuration |
 |-----------|----------|---------------|
 | Database | **MongoDB Atlas** (M0 free) | Create a DB user. Under Network Access, allow `0.0.0.0/0`. |
-| Backend | **Render** web service | Root `server` · build `npm install` · start `npm start` · env vars as above. `render.yaml` blueprint included. After the first deploy, run `npm run seed` in the Render Shell. |
+| Backend | **Render** web service | Root `server` · build `npm install` · start `npm start` · env vars as above, plus `SEED_DEMO_DATA=true` to load the demo accounts on first boot (the free tier has no shell). Seeding runs only when the database is empty. `render.yaml` blueprint included. |
 | Frontend | **Vercel** | Root `client` · preset *Vite* · env `VITE_API_URL=https://<api>.onrender.com`. `vercel.json` handles SPA routing. |
 
 > Render's free tier sleeps after ~15 min idle, so the first request then takes ~30 s. The scheduler resumes on wake and catches up on missed ghost and overdue sweeps. The admin can also trigger a sweep manually from the dashboard.

@@ -15,3 +15,5 @@ services:
         value: vitstudent.ac.in,vit.ac.in
       - key: CLIENT_ORIGIN
         sync: false
+      - key: SEED_DEMO_DATA
+        value: "true"

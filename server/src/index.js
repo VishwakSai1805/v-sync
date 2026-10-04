@@ -8,6 +8,14 @@ async function main() {
   await mongoose.connect(config.mongoUri);
   console.log('MongoDB connected');
   await ensureDefaultRules();
+  // Hosts without a shell (e.g. Render free tier): load demo data on first boot.
+  if (process.env.SEED_DEMO_DATA === 'true') {
+    const { User } = require('./models');
+    if ((await User.estimatedDocumentCount()) === 0) {
+      console.log('Empty database and SEED_DEMO_DATA=true: loading demo data');
+      await require('./seed').seedDemoData();
+    }
+  }
   if (config.enableScheduler) {
     startScheduler();
     console.log('Anti-ghosting / overdue scheduler running (every minute)');

@@ -11,6 +11,8 @@
     "test": "npm test --prefix server",
     "build": "npm run build --prefix client"
   },
-  "engines": { "node": ">=18" },
+  "engines": {
+    "node": ">=20.19.0"
+  },
   "license": "MIT"
 }

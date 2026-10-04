@@ -29,12 +29,10 @@ const FACILITIES = [
   { name: 'Robotics Workshop', category: 'Lab', location: 'GDN basement', capacity: 1, restricted: true, description: 'Restricted: power tools on site.' },
 ];
 
-async function main() {
-  await mongoose.connect(config.mongoUri);
-  if (process.argv.includes('--reset')) {
-    await mongoose.connection.dropDatabase();
-    console.log('Database reset');
-  }
+// Inserts demo data. Idempotent: existing users/resources are left untouched.
+// Assumes mongoose is already connected (used by the CLI below and by index.js
+// when SEED_DEMO_DATA=true on a fresh database).
+async function seedDemoData() {
   await karma.ensureDefaultRules();
 
   const byEmail = {};
@@ -84,10 +82,23 @@ async function main() {
 
   console.log('\nSeed complete. All demo accounts use password:', PASSWORD);
   for (const u of USERS) console.log(`  ${u.role.padEnd(12)} ${u.email}`);
+}
+
+async function main() {
+  await mongoose.connect(config.mongoUri);
+  if (process.argv.includes('--reset')) {
+    await mongoose.connection.dropDatabase();
+    console.log('Database reset');
+  }
+  await seedDemoData();
   await mongoose.disconnect();
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+if (require.main === module) {
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}
+
+module.exports = { seedDemoData };
