@@ -4,7 +4,7 @@ import { api, imageUrl, qs } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { useApi } from '../lib/hooks';
 import { fmtDate, fmtDateTime, toLocalInput } from '../lib/format';
-import { Badge, Button, Card, Empty, ErrorBox, Field, Modal, PageHeader, Spinner, Tabs, TrustPill, useToast } from '../components/ui';
+import { Badge, Button, Card, Empty, ErrorBox, Field, Modal, PageHeader, Spinner, Tabs, TrustPill, UserLink, useToast } from '../components/ui';
 
 function ItemCard({ item, action }) {
   return (
@@ -20,7 +20,7 @@ function ItemCard({ item, action }) {
         <p className="mt-0.5 text-xs font-medium uppercase tracking-wide text-indigo-600">{item.category}</p>
         {item.description && <p className="mt-2 line-clamp-2 text-sm text-slate-600">{item.description}</p>}
         {item.owner && (
-          <p className="mt-3 flex items-center gap-2 text-xs text-slate-500">Owner: {item.owner.name} <TrustPill score={item.owner.trustScore} /></p>
+          <p className="mt-3 flex items-center gap-2 text-xs text-slate-500">Owner: <UserLink user={item.owner} /> <TrustPill score={item.owner.trustScore} /></p>
         )}
         <div className="mt-auto pt-4">{action}</div>
       </div>
@@ -132,7 +132,7 @@ function LoanRow({ loan, me, onAction }) {
       <div className="min-w-0">
         <div className="flex items-center gap-2"><p className="font-semibold">{loan.resource?.name}</p><Badge value={loan.status} /></div>
         <p className="mt-0.5 text-sm text-slate-500">
-          {iAmLender ? 'Borrower' : 'Lender'}: {other.name} {iAmLender && <TrustPill score={other.trustScore} />} · due {fmtDateTime(loan.dueDate)}
+          {iAmLender ? 'Borrower' : 'Lender'}: <UserLink user={other} /> {iAmLender && <TrustPill score={other.trustScore} />} · due {fmtDateTime(loan.dueDate)}
         </p>
         {loan.message && <p className="mt-1 text-sm italic text-slate-500">“{loan.message}”</p>}
         {loan.borrowerRating && <p className="mt-1 text-xs text-slate-500">Rated {loan.borrowerRating}/5 on {fmtDate(loan.returnDate)}</p>}

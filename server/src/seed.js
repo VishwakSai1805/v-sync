@@ -10,15 +10,16 @@ const { extractKeywords } = require('./services/duplicateDetector');
 
 const PASSWORD = 'password123';
 
+// Group 21 team members are the demo students; staff accounts use role names only.
 const USERS = [
-  { name: 'Admin Office', email: 'admin@vit.ac.in', role: 'admin', department: 'Administration' },
-  { name: 'Dr. Proctor', email: 'proctor@vit.ac.in', role: 'faculty', department: 'SCOPE', facultyId: 'FAC1001' },
-  { name: 'Hostel Warden', email: 'warden@vit.ac.in', role: 'warden', department: 'Hostel Office', hostelBlock: 'Men\'s Block A' },
-  { name: 'Ravi (Electrician)', email: 'maint1@vit.ac.in', role: 'maintenance', department: 'Electrical', staffId: 'MS201' },
-  { name: 'Suresh (Plumbing/Network)', email: 'maint2@vit.ac.in', role: 'maintenance', department: 'Estate', staffId: 'MS202' },
-  { name: 'Aarav Student', email: 'student1@vitstudent.ac.in', role: 'student', department: 'CSE', year: 2, studentId: '24BCE0001', hostelBlock: 'A' },
-  { name: 'Diya Student', email: 'student2@vitstudent.ac.in', role: 'student', department: 'ECE', year: 3, studentId: '23BEC0002', hostelBlock: 'B' },
-  { name: 'Kabir Student', email: 'student3@vitstudent.ac.in', role: 'student', department: 'Mech', year: 1, studentId: '25BME0003', hostelBlock: 'A' },
+  { name: 'Gudivada Vishwak Sai', email: 'vishwak@vitstudent.ac.in', role: 'student', department: 'BYB', year: 2, studentId: '24BYB0053' },
+  { name: 'Suyash Singh', email: 'suyash@vitstudent.ac.in', role: 'student', department: 'BYB', year: 2, studentId: '24BYB0078' },
+  { name: 'Pratik Tekriwal', email: 'pratik@vitstudent.ac.in', role: 'student', department: 'BYB', year: 2, studentId: '24BYB0079' },
+  { name: 'Faculty Proctor', email: 'proctor@vit.ac.in', role: 'faculty', department: 'School of Computer Science', facultyId: 'FAC1001' },
+  { name: 'Hostel Warden', email: 'warden@vit.ac.in', role: 'warden', department: 'Hostel Office', hostelBlock: 'A' },
+  { name: 'Maintenance – Electrical', email: 'maint1@vit.ac.in', role: 'maintenance', department: 'Electrical', staffId: 'MS201' },
+  { name: 'Maintenance – Plumbing & Network', email: 'maint2@vit.ac.in', role: 'maintenance', department: 'Estate & IT', staffId: 'MS202' },
+  { name: 'Campus Admin', email: 'admin@vit.ac.in', role: 'admin', department: 'Administration' },
 ];
 
 const FACILITIES = [
@@ -47,19 +48,21 @@ async function seedDemoData() {
     await M.Resource.updateOne({ name: f.name, kind: 'facility' }, { $setOnInsert: { ...f, kind: 'facility' } }, { upsert: true });
   }
 
-  const s1 = byEmail['student1@vitstudent.ac.in'];
-  const s2 = byEmail['student2@vitstudent.ac.in'];
+  const s1 = byEmail['vishwak@vitstudent.ac.in'];
+  const s2 = byEmail['suyash@vitstudent.ac.in'];
+  const s3 = byEmail['pratik@vitstudent.ac.in'];
   const items = [
     { owner: s1, name: 'Arduino Uno R3 kit', category: 'Electronics', description: 'Board + breadboard + jumper wires + sensors.' },
     { owner: s1, name: 'Engineering Drafter', category: 'Drawing Tools', description: 'Mini drafter, good condition.' },
     { owner: s2, name: 'Let Us C — Kanetkar', category: 'Textbook', description: '16th edition.' },
     { owner: s2, name: 'Casio fx-991ES Calculator', category: 'Calculator', description: 'Exam-approved scientific calculator.' },
-    { owner: s2, name: 'Raspberry Pi 4 (4GB)', category: 'Electronics', description: 'With 32GB SD card and charger.' },
+    { owner: s3, name: 'Raspberry Pi 4 (4GB)', category: 'Electronics', description: 'With 32GB SD card and charger.' },
+    { owner: s3, name: 'Digital Multimeter', category: 'Lab Equipment', description: 'Auto-ranging, with probes.' },
   ];
   for (const it of items) {
     await M.Resource.updateOne(
       { name: it.name, owner: it.owner._id },
-      { $setOnInsert: { name: it.name, category: it.category, description: it.description, kind: 'p2p', owner: it.owner._id, location: `Hostel ${it.owner.hostelBlock}` } },
+      { $setOnInsert: { name: it.name, category: it.category, description: it.description, kind: 'p2p', owner: it.owner._id, location: 'Handover at SJT lobby' } },
       { upsert: true }
     );
   }
@@ -68,7 +71,7 @@ async function seedDemoData() {
     const issues = [
       { by: s1, title: 'WiFi router not working', description: 'No internet in the study room since morning.', category: 'network', building: 'SJT', room: '401' },
       { by: s2, title: 'Water leaking from washroom tap', description: 'Tap keeps leaking, floor is wet.', category: 'plumbing', building: 'Hostel A', room: 'Ground floor washroom' },
-      { by: s1, title: 'AC not cooling', description: 'Classroom AC blowing warm air.', category: 'hvac', building: 'TT', room: '305' },
+      { by: s3, title: 'AC not cooling', description: 'Classroom AC blowing warm air.', category: 'hvac', building: 'TT', room: '305' },
     ];
     for (const i of issues) {
       const issue = await M.Issue.create({

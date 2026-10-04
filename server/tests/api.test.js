@@ -231,4 +231,62 @@ d('V-Sync API', () => {
       expect(res.body.leaderboard.length).toBe(3);
     });
   });
+
+  describe('profiles', () => {
+    test('own profile shows private data and activity stats', async () => {
+      const res = await api().get('/api/users/me/profile').set(auth('alice'));
+      expect(res.status).toBe(200);
+      expect(res.body.isSelf).toBe(true);
+      expect(res.body.profile.email).toBe('alice@vitstudent.ac.in');
+      expect(res.body.wallet).not.toBeNull();
+      expect(res.body.stats.itemsListed).toBe(1);
+      expect(res.body.stats.timesLent).toBe(1);
+      expect(res.body.stats.ticketsOpened).toBe(1);
+      expect(res.body.stats.bookingsCompleted).toBe(1);
+      expect(res.body.items).toHaveLength(1);
+    });
+
+    test("another student's profile is public but hides private fields", async () => {
+      const res = await api().get(`/api/users/${ids.bob}/profile`).set(auth('alice'));
+      expect(res.status).toBe(200);
+      expect(res.body.isSelf).toBe(false);
+      expect(res.body.profile.email).toBeUndefined();
+      expect(res.body.wallet).toBeNull();
+      expect(res.body.trust.ratingCount).toBe(1);
+      expect(res.body.trust.averageRating).toBe(5);
+      expect(res.body.stats.bookingsGhosted).toBe(1);
+    });
+
+    test('admin can see private fields of any user', async () => {
+      const res = await api().get(`/api/users/${ids.bob}/profile`).set(auth('admin'));
+      expect(res.body.profile.email).toBe('bob@vitstudent.ac.in');
+      expect(res.body.wallet).not.toBeNull();
+    });
+
+    test('profile edits are validated; email and role cannot be changed', async () => {
+      let res = await api().patch('/api/auth/me').set(auth('carol')).send({ name: 'Carol D', year: 3, email: 'x@vitstudent.ac.in', role: 'admin' });
+      expect(res.status).toBe(200);
+      expect(res.body.user.name).toBe('Carol D');
+      expect(res.body.user.year).toBe(3);
+      expect(res.body.user.email).toBe('carol@vitstudent.ac.in');
+      expect(res.body.user.role).toBe('student');
+      expect((await api().patch('/api/auth/me').set(auth('carol')).send({ name: '  ' })).status).toBe(400);
+      expect((await api().patch('/api/auth/me').set(auth('carol')).send({ year: 9 })).status).toBe(400);
+      expect((await api().patch('/api/auth/me').set(auth('carol')).send({ password: 'hijack1' })).status).toBe(400);
+    });
+
+    test('changing password requires the current password', async () => {
+      let res = await api().post('/api/auth/change-password').set(auth('carol')).send({ currentPassword: 'wrong', newPassword: 'newsecret1' });
+      expect(res.status).toBe(400);
+      res = await api().post('/api/auth/change-password').set(auth('carol')).send({ currentPassword: 'secret12', newPassword: 'newsecret1' });
+      expect(res.status).toBe(200);
+      expect((await api().post('/api/auth/login').send({ email: 'carol@vitstudent.ac.in', password: 'secret12' })).status).toBe(401);
+      expect((await api().post('/api/auth/login').send({ email: 'carol@vitstudent.ac.in', password: 'newsecret1' })).status).toBe(200);
+    });
+
+    test('unknown user is 404', async () => {
+      const res = await api().get('/api/users/000000000000000000000000/profile').set(auth('alice'));
+      expect(res.status).toBe(404);
+    });
+  });
 });

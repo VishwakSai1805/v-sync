@@ -4,7 +4,7 @@ import { api } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { useApi } from '../lib/hooks';
 import { fmtDateTime, fmtTime } from '../lib/format';
-import { Badge, Button, Card, Empty, Modal, PageHeader, Spinner, Tabs, TrustPill, useToast } from '../components/ui';
+import { Badge, Button, Card, Empty, Modal, PageHeader, Spinner, Tabs, TrustPill, UserLink, useToast } from '../components/ui';
 
 const STEPS = [['pending_proctor', 'Faculty Proctor'], ['pending_warden', 'Hostel Warden'], ['approved', 'Booked']];
 
@@ -103,7 +103,7 @@ export default function Approvals() {
                   <p className="text-sm text-slate-500">{fmtDateTime(r.startTime)} – {fmtTime(r.endTime)} · 📍 {r.resource?.location}</p>
                   {!isStudent && (
                     <p className="mt-1 flex flex-wrap items-center gap-2 text-sm">
-                      <b>{r.student?.name}</b> <span className="text-slate-500">{r.student?.department}{r.student?.year ? `, Y${r.student.year}` : ''}{r.student?.hostelBlock ? `, Block ${r.student.hostelBlock}` : ''}</span>
+                      <UserLink user={r.student} className="font-semibold" /> <span className="text-slate-500">{r.student?.department}{r.student?.year ? `, Y${r.student.year}` : ''}{r.student?.hostelBlock ? `, Block ${r.student.hostelBlock}` : ''}</span>
                       <TrustPill score={r.student?.trustScore ?? 50} />
                     </p>
                   )}

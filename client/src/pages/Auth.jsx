@@ -34,8 +34,8 @@ function Shell({ title, subtitle, children }) {
 }
 
 const DEMO = [
-  ['Student', 'student1@vitstudent.ac.in'], ['Proctor', 'proctor@vit.ac.in'], ['Warden', 'warden@vit.ac.in'],
-  ['Maintenance', 'maint1@vit.ac.in'], ['Admin', 'admin@vit.ac.in'],
+  ['Vishwak', 'vishwak@vitstudent.ac.in'], ['Suyash', 'suyash@vitstudent.ac.in'], ['Pratik', 'pratik@vitstudent.ac.in'],
+  ['Proctor', 'proctor@vit.ac.in'], ['Warden', 'warden@vit.ac.in'], ['Maintenance', 'maint1@vit.ac.in'], ['Admin', 'admin@vit.ac.in'],
 ];
 
 export function Login() {

@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { useApi } from '../lib/hooks';
 import { fmtDateTime, ROLE_LABEL } from '../lib/format';
-import { Badge, Card, Empty, PageHeader, Spinner, Stat, TrustPill } from '../components/ui';
+import { Badge, Card, Empty, PageHeader, Spinner, Stat, TrustPill, UserLink } from '../components/ui';
 import { AdminAnalytics } from './Admin';
 import MaintenanceTickets from './Maintenance';
 
@@ -65,7 +65,7 @@ function StudentDashboard() {
                   <li key={l._id} className="flex items-center justify-between py-2.5 text-sm">
                     <div>
                       <p className="font-medium">{l.resource?.name}</p>
-                      <p className="text-slate-500">{iAmLender ? <>to {l.borrower.name} <TrustPill score={l.borrower.trustScore} /></> : `from ${l.lender.name}`} · due {fmtDateTime(l.dueDate)}</p>
+                      <p className="text-slate-500">{iAmLender ? <>to <UserLink user={l.borrower} /> <TrustPill score={l.borrower.trustScore} /></> : <>from <UserLink user={l.lender} /></>} · due {fmtDateTime(l.dueDate)}</p>
                     </div>
                     <Badge value={l.status} />
                   </li>
@@ -103,7 +103,7 @@ function ApproverDashboard() {
           <ul className="divide-y divide-slate-100">
             {pending.slice(0, 6).map((r) => (
               <li key={r._id} className="py-2.5 text-sm">
-                <p className="font-medium">{r.student?.name} → {r.resource?.name}</p>
+                <p className="font-medium"><UserLink user={r.student} /> → {r.resource?.name}</p>
                 <p className="text-slate-500">{fmtDateTime(r.startTime)} · {r.reason}</p>
               </li>
             ))}

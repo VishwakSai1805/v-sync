@@ -16,6 +16,7 @@ const I = {
   chart: 'M4 20V10m6 10V4m6 16v-7m4 7H2',
   bell: 'M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 00-4-5.7V5a2 2 0 10-4 0v.3A6 6 0 006 11v3.2a2 2 0 01-.6 1.4L4 17h5m6 0a3 3 0 11-6 0',
   menu: 'M4 6h16M4 12h16M4 18h16',
+  user: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM4 21a8 8 0 0116 0',
 };
 const Icon = ({ d, className = 'h-5 w-5' }) => (
   <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><path d={d} /></svg>
@@ -86,7 +87,7 @@ export default function Layout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
   useEffect(() => setMobileOpen(false), [location.pathname]);
-  const nav = NAV[user.role] || NAV.student;
+  const nav = [...(NAV[user.role] || NAV.student), ['/profile', 'My Profile', I.user]];
 
   const sidebar = (
     <div className="flex h-full flex-col">
@@ -106,8 +107,10 @@ export default function Layout() {
         ))}
       </nav>
       <div className="border-t border-slate-800 p-4">
-        <p className="truncate text-sm font-semibold text-white">{user.name}</p>
-        <p className="truncate text-xs text-slate-400">{ROLE_LABEL[user.role]}</p>
+        <NavLink to="/profile" className="block rounded-lg hover:bg-slate-800">
+          <p className="truncate text-sm font-semibold text-white">{user.name}</p>
+          <p className="truncate text-xs text-slate-400">{ROLE_LABEL[user.role]}</p>
+        </NavLink>
         <button onClick={logout} className="mt-3 text-xs font-medium text-slate-400 hover:text-white">Sign out →</button>
       </div>
     </div>

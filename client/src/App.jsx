@@ -11,6 +11,7 @@ import IssueDetail from './pages/IssueDetail';
 import Karma from './pages/Karma';
 import Approvals from './pages/Approvals';
 import { AdminUsers, AdminRules } from './pages/Admin';
+import { MyProfile, PublicProfile } from './pages/Profile';
 
 function Guard({ roles, children }) {
   const { user } = useAuth();
@@ -41,6 +42,8 @@ export default function App() {
         <Route path="issues/:id" element={<IssueDetail />} />
         <Route path="karma" element={<Guard roles={['student']}><Karma /></Guard>} />
         <Route path="approvals" element={<Guard roles={['student', 'faculty', 'warden', 'admin']}><Approvals /></Guard>} />
+        <Route path="profile" element={<MyProfile />} />
+        <Route path="users/:id" element={<PublicProfile />} />
         <Route path="admin/users" element={<Guard roles={['admin']}><AdminUsers /></Guard>} />
         <Route path="admin/rules" element={<Guard roles={['admin']}><AdminRules /></Guard>} />
         <Route path="*" element={<Navigate to="/" replace />} />

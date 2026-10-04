@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { titleCase } from '../lib/format';
 
 const cx = (...c) => c.filter(Boolean).join(' ');
@@ -148,6 +149,17 @@ export function Stat({ label, value, hint, tone = 'slate' }) {
 export function TrustPill({ score }) {
   const tone = score >= 70 ? 'bg-emerald-100 text-emerald-800' : score >= 40 ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800';
   return <span className={cx('rounded-full px-2 py-0.5 font-mono text-xs font-semibold', tone)} title="Trust score (0-100)">★ {score}</span>;
+}
+
+// Student name that opens their public profile (trust history, items).
+export function UserLink({ user, className }) {
+  if (!user) return null;
+  if (!user._id) return <span className={className}>{user.name}</span>;
+  return (
+    <Link to={`/users/${user._id}`} onClick={(e) => e.stopPropagation()} className={cx('font-medium text-indigo-700 hover:underline', className)}>
+      {user.name}
+    </Link>
+  );
 }
 
 // --- toasts ---

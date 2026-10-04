@@ -20,6 +20,7 @@ function createApp() {
   );
   app.get('/api/health', (req, res) => res.json({ ok: true, service: 'v-sync', time: new Date() }));
   app.use('/api/auth', require('./routes/auth'));
+  app.use('/api/users', require('./routes/users'));
   app.use('/api/resources', require('./routes/resources'));
   app.use('/api/loans', require('./routes/loans'));
   app.use('/api/reservations', require('./routes/reservations'));
