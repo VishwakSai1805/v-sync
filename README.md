@@ -7,7 +7,7 @@
 A full-stack MERN platform that unifies peer-to-peer resource lending, facility booking and crowd-sourced campus maintenance, with a behavioural karma economy that rewards accountability and penalises resource ghosting.
 
 [![CI](https://github.com/VishwakSai1805/v-sync/actions/workflows/ci.yml/badge.svg)](https://github.com/VishwakSai1805/v-sync/actions/workflows/ci.yml)
-![Node](https://img.shields.io/badge/Node.js-20-339933?logo=node.js&logoColor=white)
+![Node](https://img.shields.io/badge/Node.js-22-339933?logo=node.js&logoColor=white)
 ![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black)
 ![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248?logo=mongodb&logoColor=white)
 ![Express](https://img.shields.io/badge/Express-5-000000?logo=express&logoColor=white)
@@ -101,7 +101,7 @@ flowchart LR
 | Tier | Technology | Rationale |
 |------|-----------|-----------|
 | Presentation | React 18, Vite, Tailwind CSS 4, React Router, Context API | Component reuse (one `IssueRow`/`Badge`/`Card` set across all modules); fast HMR build tooling. |
-| Application | Node.js 20, Express 5, JWT, bcrypt, Multer, node-cron | Non-blocking I/O handles bursts of concurrent bookings; cron hosts the anti-ghosting sweep. |
+| Application | Node.js 22, Express 5, JWT, bcrypt, Multer, node-cron | Non-blocking I/O handles bursts of concurrent bookings; cron hosts the anti-ghosting sweep. |
 | Data | MongoDB Atlas + Mongoose | Flexible document model suits heterogeneous records (image-backed complaints vs. text lending requests). |
 | DevOps | Git/GitHub, GitHub Actions CI, Vercel, Render | Automated regression testing on every push; zero-config cloud deployment. |
 
@@ -294,7 +294,7 @@ MONGO_URI_TEST=mongodb://127.0.0.1:27017/vsync_test npm test     # unit + integr
 
 ## 10. Getting Started
 
-**Prerequisites:** Node.js ≥ 18 and a MongoDB instance (a free Atlas cluster or local `mongod`).
+**Prerequisites:** Node.js 22 LTS (minimum 20.19, required by Mongoose 9) and a MongoDB instance (a free Atlas cluster or local `mongod`).
 
 ```bash
 git clone https://github.com/VishwakSai1805/v-sync.git
