@@ -30,7 +30,7 @@ jobs:
           cache: npm
           cache-dependency-path: server/package-lock.json
       - run: npm ci
-      - run: npm test
+      - run: npm test -- --ci --reporters=default --reporters=github-actions
         env:
           MONGO_URI_TEST: mongodb://127.0.0.1:27017/vsync_ci
 
