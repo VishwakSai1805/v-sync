@@ -281,7 +281,7 @@ npm test                                                         # unit tests
 MONGO_URI_TEST=mongodb://127.0.0.1:27017/vsync_test npm test     # unit + integration (29 tests)
 ```
 
-> ⚠️ The database named in `MONGO_URI_TEST` is **dropped** before and after the run. Never point it at real data.
+> **Note:** Integration tests run against an isolated database (`MONGO_URI_TEST`). The suite resets that database before and after each run so every run starts clean, which is why it should be separate from the database the app uses.
 
 **Notable edge cases covered:**
 - A student reporting the same issue twice gets 409.
