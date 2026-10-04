@@ -345,7 +345,7 @@ npm run dev:client                  # Web  → http://localhost:5173 (new termin
 | Database | **MongoDB Atlas** (M0 free) | Create a DB user. Under Network Access, allow `0.0.0.0/0`. |
 | Backend | **Render** web service | Root `server` · build `npm install` · start `npm start` · env vars as above, plus `SEED_DEMO_DATA=true` to load the demo accounts on first boot (the free tier has no shell). Seeding runs only when the database is empty. `render.yaml` blueprint included. |
 | Frontend | **Vercel** | Root `client` · preset *Vite* · env `VITE_API_URL=https://<api>.onrender.com`. `vercel.json` handles SPA routing. |
-| Google Sign-In | **Google Cloud Console** | Create an OAuth 2.0 *Web application* client. Add the Vercel URL (and `http://localhost:5173`) to **Authorized JavaScript origins**, then set the client ID as `GOOGLE_CLIENT_ID` on Render. No client secret is needed: the browser gets an ID token and the server verifies it. |
+| Google Sign-In | **Google Cloud Console** | Create an OAuth 2.0 *Web application* client. Add the Vercel URL and `http://localhost:5173` to **Authorized JavaScript origins**, and `<url>/auth/callback` for each to **Authorized redirect URIs**. Set the client ID as `GOOGLE_CLIENT_ID` on Render. No client secret is needed: sign-in uses the OpenID Connect redirect flow (`response_type=id_token` with `state` and `nonce`), and the server verifies the ID token. A redirect is used instead of Google's embedded button because ad blockers often block that iframe. |
 
 > Render's free tier sleeps after ~15 min idle, so the first request then takes ~30 s. The scheduler resumes on wake and catches up on missed ghost and overdue sweeps. The admin can also trigger a sweep manually from the dashboard.
 

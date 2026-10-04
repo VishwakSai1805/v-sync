@@ -2,7 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { useAuth } from './lib/auth';
 import Layout from './components/Layout';
 import { Spinner } from './components/ui';
-import { Login, Register } from './pages/Auth';
+import { GoogleCallback, Login, Register } from './pages/Auth';
 import Dashboard from './pages/Dashboard';
 import Library from './pages/Library';
 import Facilities from './pages/Facilities';
@@ -28,6 +28,7 @@ export default function App() {
     return (
       <Routes>
         <Route path="/register" element={<Register />} />
+        <Route path="/auth/callback" element={<GoogleCallback />} />
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="*" element={<Login />} />
@@ -39,6 +40,7 @@ export default function App() {
     <Routes>
       <Route path="privacy" element={<Privacy />} />
       <Route path="terms" element={<Terms />} />
+      <Route path="auth/callback" element={<GoogleCallback />} />
       <Route element={<Layout />}>
         <Route index element={<Dashboard />} />
         <Route path="library" element={<Guard roles={['student']}><Library /></Guard>} />

@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
-import { api } from '../lib/api';
+import { api, tokenStore } from '../lib/api';
+import { readGoogleCallback, startGoogleSignIn } from '../lib/googleAuth';
 import { Button, ErrorBox, Field, Spinner } from '../components/ui';
 
 function Shell({ title, subtitle, children }) {
@@ -39,46 +40,70 @@ const DEMO = [
   ['Proctor', 'proctor@vit.ac.in'], ['Warden', 'warden@vit.ac.in'], ['Maintenance', 'maint1@vit.ac.in'], ['Admin', 'admin@vit.ac.in'],
 ];
 
-// Loads Google Identity Services once and renders the official "Sign in with Google" button.
-let gsiPromise = null;
-function loadGsi() {
-  gsiPromise ??= new Promise((resolve, reject) => {
-    const el = document.createElement('script');
-    el.src = 'https://accounts.google.com/gsi/client';
-    el.async = true;
-    el.onload = resolve;
-    el.onerror = () => { gsiPromise = null; reject(new Error('Could not load Google sign-in. Check your connection.')); };
-    document.head.appendChild(el);
-  });
-  return gsiPromise;
+const GoogleLogo = () => (
+  <svg viewBox="0 0 48 48" className="h-5 w-5" aria-hidden="true">
+    <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.1 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z" />
+    <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.1 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z" />
+    <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z" />
+    <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z" />
+  </svg>
+);
+
+function GoogleButton({ onClick, busy }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={busy}
+      className="flex w-full items-center justify-center gap-3 rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 hover:shadow disabled:opacity-60"
+    >
+      {busy ? <span className="h-5 w-5 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent" /> : <GoogleLogo />}
+      Sign in with Google
+    </button>
+  );
 }
 
-function GoogleButton({ clientId, domain, onCredential, onError }) {
-  const ref = useRef(null);
-  const cb = useRef(onCredential);
-  cb.current = onCredential;
+// Google redirects back here: /auth/callback#id_token=...&state=...
+// The fragment is captured once, as soon as this module loads, and processed by a
+// single shared promise, so re-renders/remounts can never consume the token twice
+// or read an already-cleared URL.
+const initialHash = typeof window !== 'undefined' && window.location.pathname === '/auth/callback' ? window.location.hash : '';
+let callbackResult = null;
+function completeGoogleSignIn() {
+  callbackResult ??= (async () => {
+    window.history.replaceState(null, '', window.location.pathname); // keep the token out of history
+    const credential = readGoogleCallback(initialHash);
+    const data = await api.post('/auth/google', { credential });
+    tokenStore.set(data.token);
+    return data;
+  })();
+  return callbackResult;
+}
+
+export function GoogleCallback() {
+  const [error, setError] = useState('');
   useEffect(() => {
-    let cancelled = false;
-    loadGsi()
-      .then(() => {
-        if (cancelled || !ref.current) return;
-        window.google.accounts.id.initialize({
-          client_id: clientId,
-          callback: (resp) => cb.current(resp.credential),
-          hd: domain, // hint: show only accounts from this Workspace domain (the server enforces it)
-          ux_mode: 'popup',
-          auto_select: false,
-        });
-        window.google.accounts.id.renderButton(ref.current, { theme: 'filled_blue', size: 'large', shape: 'pill', text: 'signin_with', width: 320 });
-      })
-      .catch((e) => onError(e.message));
-    return () => { cancelled = true; };
-  }, [clientId, domain, onError]);
-  return <div ref={ref} className="flex min-h-[44px] justify-center" />;
+    let active = true;
+    completeGoogleSignIn()
+      // Full reload so the whole app starts with the new session.
+      .then((data) => window.location.replace(data.isNewUser ? '/profile' : '/'))
+      .catch((err) => active && setError(err.message));
+    return () => { active = false; };
+  }, []);
+  return (
+    <Shell title={error ? 'Sign-in failed' : 'Signing you in…'} subtitle={error ? '' : 'Verifying your Google account with V-Sync.'}>
+      {error ? (
+        <div className="space-y-4">
+          <ErrorBox error={error} />
+          <Link to="/" className="inline-block text-sm font-medium text-indigo-600">← Back to sign in</Link>
+        </div>
+      ) : <Spinner />}
+    </Shell>
+  );
 }
 
 export function Login() {
-  const { login, loginWithGoogle } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
   const [cfg, setCfg] = useState(null);
   const [email, setEmail] = useState('');
@@ -93,17 +118,10 @@ export function Login() {
       .catch(() => setCfg({ googleClientId: null, passwordLoginEnabled: true, studentDomains: [] }));
   }, []);
 
-  const onGoogle = async (credential) => {
+  const onGoogle = () => {
     setBusy(true);
     setError('');
-    try {
-      const res = await loginWithGoogle(credential);
-      navigate(res.isNewUser ? '/profile' : '/');
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setBusy(false);
-    }
+    startGoogleSignIn(cfg.googleClientId);
   };
 
   const submit = async (e) => {
@@ -139,8 +157,7 @@ export function Login() {
       <ErrorBox error={error} />
       {google && (
         <div className="mt-4 space-y-3">
-          <GoogleButton clientId={cfg.googleClientId} domain={domain} onCredential={onGoogle} onError={setError} />
-          {busy && <p className="text-center text-sm text-slate-500">Signing you in…</p>}
+          <GoogleButton onClick={onGoogle} busy={busy} />
           <p className="text-center text-xs text-slate-500">New students get an account automatically on first sign-in. Faculty and staff accounts are set up by the campus admin.</p>
           <p className="text-center text-xs text-slate-400">By signing in you agree to the <Link to="/terms" className="underline hover:text-slate-600">Terms</Link> and <Link to="/privacy" className="underline hover:text-slate-600">Privacy Policy</Link>.</p>
         </div>
