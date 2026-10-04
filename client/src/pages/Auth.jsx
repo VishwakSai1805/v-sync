@@ -142,6 +142,7 @@ export function Login() {
           <GoogleButton clientId={cfg.googleClientId} domain={domain} onCredential={onGoogle} onError={setError} />
           {busy && <p className="text-center text-sm text-slate-500">Signing you in…</p>}
           <p className="text-center text-xs text-slate-500">New students get an account automatically on first sign-in. Faculty and staff accounts are set up by the campus admin.</p>
+          <p className="text-center text-xs text-slate-400">By signing in you agree to the <Link to="/terms" className="underline hover:text-slate-600">Terms</Link> and <Link to="/privacy" className="underline hover:text-slate-600">Privacy Policy</Link>.</p>
         </div>
       )}
 

@@ -12,6 +12,7 @@ import Karma from './pages/Karma';
 import Approvals from './pages/Approvals';
 import { AdminUsers, AdminRules } from './pages/Admin';
 import { MyProfile, PublicProfile } from './pages/Profile';
+import { Privacy, Terms } from './pages/Legal';
 
 function Guard({ roles, children }) {
   const { user } = useAuth();
@@ -27,6 +28,8 @@ export default function App() {
     return (
       <Routes>
         <Route path="/register" element={<Register />} />
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/terms" element={<Terms />} />
         <Route path="*" element={<Login />} />
       </Routes>
     );
@@ -34,6 +37,8 @@ export default function App() {
 
   return (
     <Routes>
+      <Route path="privacy" element={<Privacy />} />
+      <Route path="terms" element={<Terms />} />
       <Route element={<Layout />}>
         <Route index element={<Dashboard />} />
         <Route path="library" element={<Guard roles={['student']}><Library /></Guard>} />

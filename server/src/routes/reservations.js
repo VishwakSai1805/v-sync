@@ -7,7 +7,7 @@ const { validateWindow, createConfirmed } = require('../services/reservations');
 
 router.use(requireAuth);
 
-const populate = (q) => q.populate('resource', 'name category location restricted').populate('user', 'name email department');
+const populate = (q) => q.populate('resource', 'name category location restricted').populate('user', 'name department');
 
 async function ghostGrace() {
   const rule = await karma.getRule('GHOST_RESERVATION');
