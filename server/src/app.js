@@ -10,6 +10,14 @@ function createApp() {
   app.use(express.json({ limit: '1mb' }));
   if (process.env.NODE_ENV !== 'test') app.use(morgan('dev'));
 
+  app.get('/', (req, res) =>
+    res.json({
+      service: 'V-Sync API',
+      description: 'Smart Campus Resource & Maintenance Tracker (REST API)',
+      health: '/api/health',
+      docs: 'https://github.com/VishwakSai1805/v-sync#12-api-reference',
+    })
+  );
   app.get('/api/health', (req, res) => res.json({ ok: true, service: 'v-sync', time: new Date() }));
   app.use('/api/auth', require('./routes/auth'));
   app.use('/api/resources', require('./routes/resources'));
