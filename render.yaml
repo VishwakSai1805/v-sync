@@ -2,6 +2,9 @@ services:
   - type: web
     name: v-sync-api
     runtime: node
+    region: singapore
+    plan: free
+    branch: main
     rootDir: server
     buildCommand: npm install
     startCommand: npm start
