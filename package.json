@@ -1,0 +1,16 @@
+{
+  "name": "v-sync",
+  "version": "1.0.0",
+  "private": true,
+  "description": "V-Sync: Smart Campus Resource & Maintenance Tracker (MERN)",
+  "scripts": {
+    "install:all": "npm install --prefix server && npm install --prefix client",
+    "seed": "npm run seed --prefix server -- --reset",
+    "dev:server": "npm run dev --prefix server",
+    "dev:client": "npm run dev --prefix client",
+    "test": "npm test --prefix server",
+    "build": "npm run build --prefix client"
+  },
+  "engines": { "node": ">=18" },
+  "license": "MIT"
+}

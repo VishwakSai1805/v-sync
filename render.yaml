@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: v-sync-api
+    runtime: node
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ALLOWED_EMAIL_DOMAINS
+        value: vitstudent.ac.in,vit.ac.in
+      - key: CLIENT_ORIGIN
+        sync: false
