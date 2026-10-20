@@ -30,3 +30,7 @@ services:
         value: vitstudent.ac.in
       - key: ENABLE_PASSWORD_LOGIN
         value: "true"
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-flash-latest

@@ -8,12 +8,61 @@ import { Badge, Button, Card, Empty, ErrorBox, Field, Modal, PageHeader, Spinner
 
 const CAT_ICON = { electrical: '⚡', plumbing: '🚰', network: '📶', hvac: '❄️', furniture: '🪑', cleanliness: '🧹', security: '🔒', other: '📌' };
 
+const SOURCE_LABEL = { gemini: 'Gemini AI', rules: 'Offline rule engine' };
+
+// AI Issue Triage suggestion card (Assessment 10). Advisory only: the student
+// decides, nothing is applied until "Apply suggestion" is clicked.
+export function AiSuggestion({ suggestion, applied, onApply, onDismiss }) {
+  const s = suggestion;
+  return (
+    <div data-testid="ai-suggestion" className="rounded-xl border border-violet-200 bg-violet-50 p-4 text-sm">
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+        <p className="font-semibold text-violet-900">✨ AI triage suggestion</p>
+        <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-violet-700 ring-1 ring-violet-200">
+          {SOURCE_LABEL[s.source] || s.source} · {Math.round((s.confidence || 0) * 100)}% confident
+        </span>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <span className="rounded-full bg-white px-2 py-0.5 text-xs font-semibold text-slate-700 ring-1 ring-slate-200">{CAT_ICON[s.category]} {titleCase(s.category)}</span>
+        <Badge value={s.severity} label={`${titleCase(s.severity)} severity`} />
+      </div>
+      <p className="mt-2 text-slate-800"><b>Title:</b> {s.title}</p>
+      {s.summary && <p className="mt-1 text-slate-600">{s.summary}</p>}
+      {s.reasoning && <p className="mt-1 text-xs italic text-slate-500">Why: {s.reasoning}</p>}
+      <div className="mt-3 flex gap-2">
+        <Button type="button" size="sm" onClick={onApply} disabled={applied}>{applied ? '✓ Applied' : 'Apply suggestion'}</Button>
+        <Button type="button" size="sm" variant="ghost" onClick={onDismiss}>Dismiss</Button>
+      </div>
+    </div>
+  );
+}
+
 function ReportModal({ categories, onClose, onDone }) {
   const [form, setForm] = useState({ title: '', description: '', category: 'network', building: '', room: '' });
   const [file, setFile] = useState(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [aiBusy, setAiBusy] = useState(false);
+  const [suggestion, setSuggestion] = useState(null);
+  const [applied, setApplied] = useState(false);
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
+  const askAi = async () => {
+    setAiBusy(true);
+    setError('');
+    try {
+      const { suggestion: s } = await api.post('/issues/triage', { title: form.title, description: form.description });
+      setSuggestion(s);
+      setApplied(false);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setAiBusy(false);
+    }
+  };
+  const applySuggestion = () => {
+    setForm({ ...form, category: suggestion.category, title: suggestion.title || form.title });
+    setApplied(true);
+  };
   const submit = async (e) => {
     e.preventDefault();
     setBusy(true);
@@ -35,6 +84,11 @@ function ReportModal({ categories, onClose, onDone }) {
         <ErrorBox error={error} />
         <Field label="What's wrong?"><input className="input" value={form.title} onChange={set('title')} required placeholder="e.g. WiFi not working in study room" /></Field>
         <Field label="Details"><textarea className="input" rows={3} value={form.description} onChange={set('description')} placeholder="When did it start? How bad is it?" /></Field>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button type="button" variant="secondary" size="sm" loading={aiBusy} disabled={form.title.trim().length < 3} onClick={askAi}>✨ Suggest category &amp; priority with AI</Button>
+          <span className="text-xs text-slate-500">Reads your description and suggests how to file it.</span>
+        </div>
+        {suggestion && <AiSuggestion suggestion={suggestion} applied={applied} onApply={applySuggestion} onDismiss={() => setSuggestion(null)} />}
         <div className="grid gap-3 sm:grid-cols-3">
           <Field label="Category">
             <select className="input" value={form.category} onChange={set('category')}>

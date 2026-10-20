@@ -33,6 +33,17 @@ const issueSchema = new mongoose.Schema(
       },
     ],
     resolvedAt: { type: Date, default: null },
+    // AI Issue Triage result captured when the ticket was created (advisory).
+    aiTriage: {
+      category: { type: String, enum: CATEGORIES, default: null },
+      severity: { type: String, enum: PRIORITIES, default: null },
+      summary: { type: String, default: '' },
+      confidence: { type: Number, default: null },
+      reasoning: { type: String, default: '' },
+      source: { type: String, enum: ['gemini', 'rules'], default: null },
+      model: { type: String, default: null },
+      categoryOverridden: { type: Boolean, default: false }, // reporter chose a different category
+    },
   },
   { timestamps: true }
 );

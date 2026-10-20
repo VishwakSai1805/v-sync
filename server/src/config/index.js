@@ -31,4 +31,12 @@ module.exports = {
   karma: {
     startingBalance: Number(process.env.KARMA_STARTING_BALANCE) || 100,
   },
+  // AI Issue Triage. No key = the offline rule engine is used instead (the feature still works).
+  ai: {
+    enabled: process.env.AI_TRIAGE_ENABLED !== 'false',
+    geminiApiKey: process.env.GEMINI_API_KEY || '',
+    // Any generateContent model id from Google AI Studio; "gemini-flash-latest" tracks the current Flash model.
+    geminiModel: process.env.GEMINI_MODEL || 'gemini-flash-latest',
+    timeoutMs: Number(process.env.AI_TIMEOUT_MS) || 8000,
+  },
 };

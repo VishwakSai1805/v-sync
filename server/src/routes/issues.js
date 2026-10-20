@@ -6,8 +6,30 @@ const { upload, saveImage } = require('../middleware/upload');
 const { findDuplicate, priorityForCount, extractKeywords } = require('../services/duplicateDetector');
 const karma = require('../services/karma');
 const { notify } = require('../services/notify');
+const ai = require('../services/aiTriage');
 
 router.use(requireAuth);
+
+// Simple per-user throttle for the AI endpoint (protects the free Gemini quota).
+const TRIAGE_LIMIT = 15;
+const triageHits = new Map();
+function triageThrottle(req, res, next) {
+  const now = Date.now();
+  const key = String(req.user._id);
+  const recent = (triageHits.get(key) || []).filter((t) => now - t < 60_000);
+  if (recent.length >= TRIAGE_LIMIT) return next(new ApiError(429, 'Too many AI suggestions, try again in a minute'));
+  recent.push(now);
+  triageHits.set(key, recent);
+  next();
+}
+
+// POST /api/issues/triage  { title, description } -> AI suggestion (does NOT create anything).
+router.post('/triage', requireRole('student', 'faculty', 'warden'), triageThrottle, ah(async (req, res) => {
+  const { title = '', description = '' } = req.body || {};
+  if (String(title).trim().length < 3) throw new ApiError(400, 'Describe the problem in a few words first');
+  const suggestion = await ai.triage({ title, description });
+  res.json({ suggestion });
+}));
 
 const DUP_WINDOW_DAYS = 30;
 const populate = (q) =>
@@ -63,7 +85,7 @@ router.post('/', requireRole('student', 'faculty', 'warden'), upload.single('ima
     const issue = await Issue.findById(match._id);
     issue.reportCount += 1;
     issue.reporters.push(req.user._id);
-    issue.priority = priorityForCount(issue.reportCount);
+    issue.priority = ai.maxPriority(priorityForCount(issue.reportCount), issue.aiTriage?.severity || 'low');
     if (!issue.image && image) issue.image = image;
     // Grow the ticket's keyword set so later reports match better.
     issue.keywords = [...new Set([...(issue.keywords || []), ...keywords])].slice(0, 40);
@@ -77,10 +99,17 @@ router.post('/', requireRole('student', 'faculty', 'warden'), upload.single('ima
   }
 
   const location = room ? `${building} / ${room}` : building;
+  // AI triage runs only for NEW tickets (a merged duplicate keeps its ticket's triage).
+  const t = await ai.triage({ title, description });
+  const aiTriage = {
+    category: t.category, severity: t.severity, summary: t.summary, confidence: t.confidence,
+    reasoning: t.reasoning, source: t.source, model: t.model, categoryOverridden: t.category !== category,
+  };
   const issue = await Issue.create({
-    title, description, category, building, room, location, image,
+    title, description, category, building, room, location, image, aiTriage,
     keywords: keywords.length ? keywords : extractKeywords(title),
-    createdBy: req.user._id, reporters: [req.user._id], reportCount: 1, priority: 'low',
+    createdBy: req.user._id, reporters: [req.user._id], reportCount: 1,
+    priority: ai.maxPriority(priorityForCount(1), t.severity),
     statusHistory: [{ status: 'open', note: 'Reported', by: req.user._id }],
   });
   await IssueReport.create({ reporter: req.user._id, issue: issue._id, title, description, category, building, room, image, isDuplicate: false, similarityScore: score || null });

@@ -107,6 +107,21 @@ export default function IssueDetail() {
 
         <div className="space-y-6">
           {['maintenance', 'admin'].includes(user.role) && <StaffActions issue={issue} onChange={reload} />}
+          {issue.aiTriage?.source && (
+            <Card className="border-violet-200 p-5" data-testid="ai-triage-panel">
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <h2 className="font-semibold">✨ AI triage</h2>
+                <span className="text-[11px] font-medium text-violet-700">{issue.aiTriage.source === 'gemini' ? 'Gemini AI' : 'Rule engine'}</span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Badge value={issue.aiTriage.severity} label={`${titleCase(issue.aiTriage.severity)} severity`} />
+                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">Suggested: {titleCase(issue.aiTriage.category)}</span>
+              </div>
+              {issue.aiTriage.summary && <p className="mt-2 text-sm text-slate-700">{issue.aiTriage.summary}</p>}
+              {issue.aiTriage.categoryOverridden && <p className="mt-2 text-xs text-amber-700">Reporter filed it under {titleCase(issue.category)} instead.</p>}
+              <p className="mt-2 text-xs text-slate-500">Priority = higher of the crowd signal ({issue.reportCount} report{issue.reportCount > 1 ? 's' : ''}) and AI severity.</p>
+            </Card>
+          )}
           <Card className="p-5">
             <h2 className="mb-3 font-semibold">Timeline</h2>
             <ol className="relative space-y-4 border-l border-slate-200 pl-4">
