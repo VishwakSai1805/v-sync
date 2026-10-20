@@ -146,6 +146,20 @@ d('V-Sync API', () => {
       const notes = await M.Notification.countDocuments({ user: ids.bob, type: 'issue' });
       expect(notes).toBeGreaterThan(0);
     });
+
+    test('AI triage: suggestion endpoint + safety-critical report is critical on first report', async () => {
+      let res = await api().post('/api/issues/triage').set(auth('faculty')).send({ title: 'Socket sparking', description: 'burnt smell near the projector' });
+      expect(res.status).toBe(200);
+      expect(res.body.suggestion).toMatchObject({ category: 'electrical', severity: 'critical' });
+      expect(['gemini', 'rules']).toContain(res.body.suggestion.source);
+      expect((await api().post('/api/issues/triage').set(auth('faculty')).send({ title: 'x' })).status).toBe(400);
+      expect((await api().post('/api/issues/triage').set(auth('maintenance')).send({ title: 'Socket sparking' })).status).toBe(403);
+
+      res = await api().post('/api/issues').set(auth('faculty')).send({ title: 'Socket sparking', description: 'burnt smell near the projector', category: 'electrical', building: 'TT', room: '102' });
+      expect(res.status).toBe(201);
+      expect(res.body.issue.priority).toBe('critical'); // 1 report, but AI severity wins
+      expect(res.body.issue.aiTriage).toMatchObject({ severity: 'critical', category: 'electrical', categoryOverridden: false });
+    });
   });
 
   describe('Reservations + anti-ghosting', () => {
